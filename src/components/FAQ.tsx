@@ -1,12 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, ArrowUpRight, MessageCircle } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import {
-  CustomAccordion,
-  CustomAccordionItem,
-  CustomAccordionTrigger,
-  CustomAccordionContent,
-} from "@/components/ui/custom-faq-accordion";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const faqs = [
   {
@@ -22,76 +19,182 @@ const faqs = [
   {
     question: "What if I spill something or damage an item?",
     answer:
-      "Life happens! Minor wear and tear is completely covered - that's normal use. For accidental stains or damage, we have a simple damage protection fee (much cheaper than buying the item). Just let us know what happened when you return it, and we'll take care of the rest.",
+      "Life happens! Minor wear and tear is completely covered. For accidental stains, we have a simple damage protection fee. Just let us know what happened when you return it, and we'll take care of the rest.",
   },
   {
     question: "How long is a standard rental?",
     answer:
-      "Our standard rental is 48 hours, giving you plenty of time to wear and enjoy your outfit. Need it longer? You can easily extend your rental through the app. We'll arrange a convenient pickup time when you're done - no washing required!",
+      "Our standard rental is 48 hours. Need it longer? You can easily extend your rental through the app. We'll arrange a convenient pickup time when you're done - no washing required!",
   },
   {
-    question: "Is this really more sustainable than buying?",
+    question: "Is this sustainable?",
     answer:
-      "Absolutely! By sharing clothes instead of everyone buying their own, we dramatically reduce fashion waste and overproduction. One outfit can be worn by dozens of people instead of sitting in a closet unused. Plus, our eco-friendly cleaning process and local delivery minimize environmental impact.",
+      "Absolutely! By sharing clothes, we dramatically reduce fashion waste. One outfit can be worn by dozens of people instead of sitting in a closet. Plus, our eco-friendly cleaning process and local delivery minimize environmental impact.",
   },
   {
     question: "What happens if my outfit doesn't fit?",
     answer:
-      "We understand that fit is everything, and we've designed our service to solve this. Our goal is to ensure you look and feel amazing, with zero stress.",
+      "We understand fit is everything. If it doesn't fit, request an instant exchange within 10 minutes of delivery, and we'll rush a size swap to you immediately.",
   },
 ];
 
-const FAQ = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-
+const FAQItem = ({ item, index, isOpen, onClick }: { item: any, index: number, isOpen: boolean, onClick: () => void }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const arrowRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
-    if (titleRef.current && sectionRef.current) {
-      gsap.fromTo(
-        titleRef.current,
-        {
-          opacity: 0,
-          y: 30,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 75%",
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
+    // Animate Content Height
+    if (isOpen) {
+      gsap.to(contentRef.current, {
+        height: "auto",
+        opacity: 1,
+        duration: 0.5,
+        ease: "power2.out",
+      });
+      gsap.to(arrowRef.current, {
+        rotation: 45,
+        duration: 0.3,
+        ease: "back.out(1.7)"
+      });
+    } else {
+      gsap.to(contentRef.current, {
+        height: 0,
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.inOut",
+      });
+      gsap.to(arrowRef.current, {
+        rotation: 0,
+        duration: 0.3,
+        ease: "power2.out"
+      });
     }
-  }, []);
+  }, [isOpen]);
 
   return (
-    <section ref={sectionRef} id="faq" className="py-16 md:py-24 lg:py-32 px-4 md:px-6 lg:px-8 bg-white">
-      <div className="container mx-auto max-w-3xl">
-        <div ref={titleRef} className="text-center mb-8 md:mb-12 lg:mb-16">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-headline mb-3 md:mb-4">
-            Got Questions? We've Got Answers.
-          </h2>
-          <p className="text-muted-foreground text-base md:text-lg lg:text-xl">
-            Everything you need to know about Popclozet
-          </p>
+    <div 
+      onClick={onClick}
+      className="group border-b border-gray-200 cursor-pointer py-6 md:py-8 transition-colors duration-500 hover:border-[#8B1A3D]"
+    >
+      {/* Header Row */}
+      <div className="flex items-start justify-between gap-6">
+        
+        <div className="flex items-baseline gap-6 md:gap-12 flex-1">
+          {/* Index Number */}
+          <span className={`font-mono text-sm md:text-base transition-colors duration-300 ${isOpen ? "text-[#8B1A3D] font-bold" : "text-gray-300 group-hover:text-[#8B1A3D]"}`}>
+            0{index + 1}
+          </span>
+          
+          {/* Question */}
+          <h3 className={`text-xl md:text-3xl font-serif font-medium leading-tight transition-colors duration-300 ${isOpen ? "text-[#8B1A3D]" : "text-gray-900 group-hover:text-[#8B1A3D]"}`}>
+            {item.question}
+          </h3>
         </div>
 
-        <CustomAccordion type="single" collapsible defaultValue="item-0" className="space-y-4 md:space-y-6">
+        {/* Icon */}
+        <div ref={arrowRef} className={`shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full border border-gray-200 flex items-center justify-center transition-all duration-300 ${isOpen ? "bg-[#8B1A3D] border-[#8B1A3D]" : "bg-transparent group-hover:border-[#8B1A3D]"}`}>
+           {isOpen ? (
+             <Plus className="w-5 h-5 text-white rotate-45" /> 
+           ) : (
+             <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-[#8B1A3D]" />
+           )}
+        </div>
+      </div>
+
+      {/* Answer Content (Animated) */}
+      <div 
+        ref={contentRef} 
+        className="h-0 overflow-hidden opacity-0"
+      >
+        <div className="pt-6 pl-0 md:pl-[4.5rem] max-w-2xl">
+          <p className="text-gray-500 text-base md:text-lg leading-relaxed font-light">
+            {item.answer}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FAQ = () => {
+  const containerRef = useRef<HTMLElement>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Staggered entrance for the list items
+      gsap.from(".faq-item-anim", {
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 70%",
+        }
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const handleToggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
+  return (
+    <section ref={containerRef} id="faq" className="relative py-24 md:py-32 bg-white overflow-hidden">
+      
+      {/* Background Decor: Big '?' Watermark */}
+      <div className="absolute top-0 right-[5%] text-[40rem] font-serif font-black text-gray-50 leading-none pointer-events-none select-none -z-10 opacity-60">
+        ?
+      </div>
+
+      <div className="container mx-auto px-4 md:px-6 max-w-5xl">
+        
+        {/* Editorial Header - Redesigned */}
+<div className="flex flex-col items-center text-center mb-16 md:mb-24 relative">
+  
+  {/* Subtext acting as the "Eyebrow" */}
+  <span className="text-[#8B1A3D] font-bold tracking-[0.2em] text-xs md:text-sm uppercase mb-4 md:mb-6 block relative z-10">
+    Everything you need to know about Popclozet
+  </span>
+
+  {/* Main Headline */}
+  <h2 className="text-4xl md:text-6xl lg:text-7xl font-serif font-medium text-gray-900 leading-[1.1] relative z-10">
+    Got Questions? <br className="hidden md:block" />
+    <span className="relative inline-block mt-1 md:mt-2">
+      We've Got <span className="font-black italic text-[#8B1A3D]">Answers.</span>
+      
+      {/* Decorative Vector Underline for "Answers" */}
+      <svg 
+        className="absolute w-[110%] h-6 -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 text-[#8B1A3D]/20 -z-10" 
+        viewBox="0 0 100 10" 
+        preserveAspectRatio="none"
+      >
+        <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="4" fill="none" />
+      </svg>
+    </span>
+  </h2>
+
+  {/* Background blur for depth (Optional polish) */}
+  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#8B1A3D]/5 rounded-full blur-[80px] -z-0 pointer-events-none" />
+</div>
+
+        {/* The List */}
+        <div className="border-t border-gray-200">
           {faqs.map((faq, index) => (
-            <CustomAccordionItem key={index} value={`item-${index}`}>
-              <CustomAccordionTrigger className="text-left text-base md:text-lg">
-                {faq.question}
-              </CustomAccordionTrigger>
-              <CustomAccordionContent className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                {faq.answer}
-              </CustomAccordionContent>
-            </CustomAccordionItem>
+            <div key={index} className="faq-item-anim">
+              <FAQItem 
+                item={faq} 
+                index={index} 
+                isOpen={openIndex === index} 
+                onClick={() => handleToggle(index)} 
+              />
+            </div>
           ))}
-        </CustomAccordion>
+        </div>
       </div>
     </section>
   );

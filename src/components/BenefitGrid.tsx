@@ -1,4 +1,9 @@
+import { useEffect, useRef } from "react";
 import { Sparkles, Clock, Leaf, Shirt, ArrowRight, Zap } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Custom Vector Illustrations (SVGs)
 const HangerVector = () => (
@@ -10,17 +15,84 @@ const HangerVector = () => (
 );
 
 const BenefitGrid = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // 1. Header Animation (Fade Up & Reveal)
+      gsap.fromTo(
+        ".benefit-header-anim",
+        { 
+          y: 50, 
+          opacity: 0 
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 1,
+          ease: "power3.out",
+          stagger: 0.15, // Delay between eyebrow and title
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+
+      // 2. Bento Grid Cards Animation (Staggered Pop)
+      gsap.fromTo(
+        ".bento-card",
+        { 
+          y: 80, 
+          opacity: 0, 
+          scale: 0.9 
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.8,
+          stagger: 0.15, // Cards appear one after another
+          ease: "back.out(1.5)", // Satisfying bounce effect
+          scrollTrigger: {
+            trigger: ".bento-grid-container",
+            start: "top 75%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+
+    }, sectionRef);
+
+    return () => ctx.revert(); // Cleanup
+  }, []);
+
   return (
-    <section id="benefits" className="relative h-screen min-h-[600px] w-full flex flex-col justify-center items-center overflow-hidden px-4 bg-[#d4a2b1]">
+    <section 
+      ref={sectionRef} 
+      id="benefits" 
+      className="relative h-screen min-h-[600px] w-full flex flex-col justify-center items-center overflow-hidden px-4 bg-[#d4a2b1]/10"
+    >
       
+      {/* Subtle Background Blur for Depth */}
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#8B1A3D]/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-pink-200/20 rounded-full blur-[100px] pointer-events-none" />
+
       <div className="container mx-auto relative z-10 max-w-5xl flex flex-col h-full justify-center">
         
-        {/* Compact Editorial Header */}
-        <div className="flex flex-col items-center text-center mb-6 md:mb-8 relative z-10 shrink-0">
+        {/* Editorial Header */}
+        <div className="flex flex-col items-center text-center mb-8 relative z-10 shrink-0">
+          {/* 1. The Eyebrow */}
+          <div className="benefit-header-anim mb-2 opacity-0">
+             <span className="text-[#8B1A3D] font-sans text-[10px] md:text-xs font-extrabold uppercase tracking-[0.3em] bg-white/50 px-4 py-1 rounded-full backdrop-blur-sm border border-[#8B1A3D]/10">
+               The Popclozet Promise
+             </span>
+          </div>
 
           {/* 2. The Main Headline */}
-          <h2 className="font-serif text-gray-400 flex flex-col items-center justify-center">
-            <span className="text-2xl md:text-3xl font-medium tracking-tight leading-none text-white">
+          <h2 className="benefit-header-anim font-serif text-gray-400 flex flex-col items-center justify-center opacity-0">
+            <span className="text-2xl md:text-3xl font-medium tracking-tight leading-none text-gray-600">
               We finally cured
             </span>
             <span className="relative text-4xl md:text-6xl font-black italic text-[#8B1A3D] mt-1 leading-tight drop-shadow-sm">
@@ -30,10 +102,10 @@ const BenefitGrid = () => {
         </div>
 
         {/* COMPACT BENTO GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[450px] w-full shrink-0">
+        <div className="bento-grid-container grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[450px] w-full shrink-0">
           
           {/* CARD 1: The Rack (Tall) */}
-          <div className="group relative md:col-span-1 md:row-span-2 bg-gray-50 rounded-[24px] p-6 flex flex-col justify-between overflow-hidden border border-gray-100 
+          <div className="bento-card opacity-0 group relative md:col-span-1 md:row-span-2 bg-white rounded-[24px] p-6 flex flex-col justify-between overflow-hidden border border-white/60 shadow-sm
             hover:border-[#8B1A3D]/30 hover:bg-gradient-to-b hover:from-white hover:to-pink-50 
             transition-all duration-500 ease-out hover:shadow-[0_20px_40px_-15px_rgba(139,26,61,0.15)] hover:scale-[1.02]">
             
@@ -42,7 +114,7 @@ const BenefitGrid = () => {
             </div>
             
             {/* Big Number */}
-            <span className="absolute top-2 left-4 text-[8rem] font-serif font-black text-gray-200/50 group-hover:text-[#8B1A3D]/5 leading-none -z-0 select-none transition-colors duration-500">01</span>
+            <span className="absolute top-2 left-4 text-[8rem] font-serif font-black text-gray-100 group-hover:text-[#8B1A3D]/5 leading-none -z-0 select-none transition-colors duration-500">01</span>
 
             <div className="relative z-10 mt-auto">
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm mb-4 border border-gray-100 group-hover:border-[#8B1A3D]/20 transition-colors">
@@ -52,7 +124,7 @@ const BenefitGrid = () => {
                 The <span className="italic">Mix & Match</span>
               </h3>
               <p className="text-gray-500 text-xs leading-relaxed mb-4 font-medium max-w-[200px]">
-              Just need a new top? Browse thousands of individual pieces to complete the look you already have. Total creative freedom.
+                Just need a new top? Browse thousands of individual pieces to complete the look you already have. Total creative freedom.
               </p>
               <div className="flex items-center text-[#8B1A3D] font-bold text-xs group-hover:translate-x-2 transition-transform cursor-pointer uppercase tracking-wider">
                 Explore Rack <ArrowRight className="w-3 h-3 ml-2" />
@@ -61,7 +133,7 @@ const BenefitGrid = () => {
           </div>
 
           {/* CARD 2: Event Ready (Wide) */}
-          <div className="group relative md:col-span-2 bg-[#8B1A3D] rounded-[24px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between overflow-hidden text-white 
+          <div className="bento-card opacity-0 group relative md:col-span-2 bg-[#8B1A3D] rounded-[24px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between overflow-hidden text-white 
             hover:bg-gradient-to-r hover:from-[#8B1A3D] hover:to-[#6d1430]
             transition-all duration-500 ease-out shadow-lg hover:shadow-[0_20px_40px_-15px_rgba(139,26,61,0.4)] hover:scale-[1.02]">
             
@@ -77,7 +149,7 @@ const BenefitGrid = () => {
                 Event-Ready Looks
               </h3>
               <p className="text-white/80 text-xs md:text-sm leading-relaxed font-light">
-              Got a date, party, or fest? Rent a complete, stylist-approved outfit with one tap. Your 'go-to' look for any event.
+                Got a date, party, or fest? Rent a complete, stylist-approved outfit with one tap. Your 'go-to' look for any event.
               </p>
             </div>
             
@@ -89,7 +161,7 @@ const BenefitGrid = () => {
           </div>
 
           {/* CARD 3: Speed (Small) */}
-          <div className="group relative bg-[#FFF5F7] rounded-[24px] p-6 border border-pink-100/50 flex flex-col justify-between overflow-hidden
+          <div className="bento-card opacity-0 group relative bg-[#FFF5F7] rounded-[24px] p-6 border border-pink-100/50 flex flex-col justify-between overflow-hidden
             hover:bg-gradient-to-br hover:from-[#FFF0F5] hover:to-[#FFD1DC] hover:border-[#8B1A3D]/20
             transition-all duration-500 ease-out hover:shadow-lg hover:scale-[1.02]">
              
@@ -105,13 +177,13 @@ const BenefitGrid = () => {
                     <Zap className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                 </div>
                 <p className="text-gray-600 text-xs leading-relaxed">
-                Your plans are spontaneous, so we are too. Your outfit arrives at your door—fresh, clean, and ready to wear.<br/> <span className="font-bold text-[#8B1A3D]">60 minutes flat.</span>
+                   Your plans are spontaneous, so we are too. Fresh, clean & ready in <br/> <span className="font-bold text-[#8B1A3D]">60 minutes flat.</span>
                 </p>
              </div>
           </div>
 
           {/* CARD 4: Sustainability (Small) */}
-          <div className="group relative bg-[#F0FDF4] rounded-[24px] p-6 border border-green-100/50 flex flex-col justify-between overflow-hidden
+          <div className="bento-card opacity-0 group relative bg-[#F0FDF4] rounded-[24px] p-6 border border-green-100/50 flex flex-col justify-between overflow-hidden
              hover:bg-gradient-to-br hover:from-[#F0FDF4] hover:to-[#BBF7D0] hover:border-green-400/30
              transition-all duration-500 ease-out hover:shadow-lg hover:scale-[1.02]">
              
@@ -124,8 +196,8 @@ const BenefitGrid = () => {
              <div className="relative z-10">
                 <h3 className="text-lg font-serif font-medium text-gray-900 mb-1 group-hover:text-green-800 transition-colors">Sustainable</h3>
                 <p className="text-gray-600 text-xs leading-relaxed">
-                Look amazing for  <span className="font-bold text-green-700">10-15% of retail price. </span>
-                When you're done, just use the free return bag. We handle all the dry cleaning.
+                   Look amazing for  <span className="font-bold text-green-700">10-15% of retail price. </span>
+                   When you're done, just use the free return bag. We handle all the dry cleaning.
                 </p>
              </div>
           </div>
