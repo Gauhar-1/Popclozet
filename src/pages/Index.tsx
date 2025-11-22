@@ -10,6 +10,7 @@ import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import heroImage from "@/assets/trendy-outfits.webp";
 import { toast } from "sonner";
+import Hero from "@/components/Hero";
 
 type TestimonialDetails = {
   [key: string]: iTestimonial & { id: string };
@@ -106,16 +107,8 @@ const Index = () => {
       {/* Navigation */}
       <Navigation />
 
-      {/* Hero Section */}
-      <SyntheticHero
-        title="New Outfit Everyday, Delivered in 60 Minutes."
-        description="Why own it when you can rent it? Get the perfect outfit for dates, parties, and trips from your endless closet—on demand, no commitment necessary."
-        showEmailCapture={true}
-        emailPlaceholder="Enter your email"
-        emailButtonText="Unlock my closet"
-        heroImage={heroImage}
-        onEmailSubmit={handleEmailSubmit}
-      />
+
+      <Hero heroImage={heroImage}></Hero>
 
       {/* Benefit Grid */}
       <BenefitGrid />

@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   CustomAccordion,
   CustomAccordionItem,
@@ -39,21 +42,53 @@ const faqs = [
 ];
 
 const FAQ = () => {
-  return (
-    <section id="faq" className="py-16 md:py-20 px-4 bg-background">
-      <div className="container mx-auto max-w-3xl">
-        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-headline text-center mb-3 md:mb-4">
-          Got Questions? We've Got Answers.
-        </h2>
-        <p className="text-muted-foreground text-center mb-8 md:mb-12 text-base md:text-lg">
-          Everything you need to know about Popclozet
-        </p>
+  const sectionRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
 
-        <CustomAccordion type="single" collapsible defaultValue="item-0" className="space-y-6">
+  useEffect(() => {
+    if (titleRef.current && sectionRef.current) {
+      gsap.fromTo(
+        titleRef.current,
+        {
+          opacity: 0,
+          y: 30,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 75%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+    }
+  }, []);
+
+  return (
+    <section ref={sectionRef} id="faq" className="py-16 md:py-24 lg:py-32 px-4 md:px-6 lg:px-8 bg-white">
+      <div className="container mx-auto max-w-3xl">
+        <div ref={titleRef} className="text-center mb-8 md:mb-12 lg:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-headline mb-3 md:mb-4">
+            Got Questions? We've Got Answers.
+          </h2>
+          <p className="text-muted-foreground text-base md:text-lg lg:text-xl">
+            Everything you need to know about Popclozet
+          </p>
+        </div>
+
+        <CustomAccordion type="single" collapsible defaultValue="item-0" className="space-y-4 md:space-y-6">
           {faqs.map((faq, index) => (
             <CustomAccordionItem key={index} value={`item-${index}`}>
-              <CustomAccordionTrigger>{faq.question}</CustomAccordionTrigger>
-              <CustomAccordionContent>{faq.answer}</CustomAccordionContent>
+              <CustomAccordionTrigger className="text-left text-base md:text-lg">
+                {faq.question}
+              </CustomAccordionTrigger>
+              <CustomAccordionContent className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                {faq.answer}
+              </CustomAccordionContent>
             </CustomAccordionItem>
           ))}
         </CustomAccordion>
