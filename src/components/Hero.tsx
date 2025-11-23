@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowUpRight } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { gsap } from "gsap";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,30 +23,45 @@ const Hero = ({ heroImage }: HeroProps) => {
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
     if (containerRef.current) {
+      // Optimize animations with will-change and GPU acceleration
+      if (centerColRef.current) {
+        gsap.set(centerColRef.current, { willChange: "transform, opacity" });
+      }
+      if (leftColRef.current) {
+        Array.from(leftColRef.current.children).forEach((child) => {
+          gsap.set(child, { willChange: "transform, opacity" });
+        });
+      }
+      if (rightColRef.current) {
+        Array.from(rightColRef.current.children).forEach((child) => {
+          gsap.set(child, { willChange: "transform, opacity" });
+        });
+      }
+
       // Adjusted animations for a tighter feel
       tl.fromTo(
         centerColRef.current,
-        { scale: 0.9, opacity: 0, y: 30 },
-        { scale: 1, opacity: 1, y: 0, duration: 1.2 }
+        { scale: 0.9, opacity: 0, y: 30, force3D: true },
+        { scale: 1, opacity: 1, y: 0, duration: 1.2, clearProps: "willChange" }
       )
         .fromTo(
           leftColRef.current?.children || [],
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, stagger: 0.1, duration: 0.8 },
+          { y: 30, opacity: 0, force3D: true },
+          { y: 0, opacity: 1, stagger: 0.1, duration: 0.8, clearProps: "willChange" },
           "-=0.9"
         )
         .fromTo(
           rightColRef.current?.children || [],
-          { x: 20, opacity: 0 },
-          { x: 0, opacity: 1, stagger: 0.1, duration: 0.8 },
+          { x: 20, opacity: 0, force3D: true },
+          { x: 0, opacity: 1, stagger: 0.1, duration: 0.8, clearProps: "willChange" },
           "-=0.7"
         );
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || isLoading) return;
     
     setIsLoading(true);
     try {
@@ -68,12 +83,12 @@ const Hero = ({ heroImage }: HeroProps) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [email, isLoading]);
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full bg-[#FAFAFA] overflow-hidden flex items-center py-8 md:py-12 lg:py-16 min-h-[fit-content]"
+      className="relative w-full bg-[#FAFAFA] overflow-hidden flex items-center py-8 mt-20 md:mt-0 md:py-12 lg:py-16 min-h-[fit-content]"
     >
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-6 items-center">
@@ -89,14 +104,14 @@ const Hero = ({ heroImage }: HeroProps) => {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl xl:text-6xl font-serif font-bold text-gray-900 leading-[1.1] mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-gray-900 leading-[1.1] mb-4">
               Welcome To <br />
               The Future Of <br />
               <span className="italic text-[#8B1A3D]">Fashion</span>
             </h1>
 
             {/* Floating Profile Card (Stylist) - Simplified for mobile */}
-            <div className="bg-white p-3 rounded-2xl shadow-xl border border-gray-100 w-full max-w-[260px] mb-6 transform hover:-translate-y-1 transition-transform duration-300 hidden sm:block">
+            <div className="bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-xl border border-gray-100 w-full max-w-[260px] mb-4 md:mb-6 transform hover:-translate-y-1 transition-transform duration-300 hidden sm:block">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#8B1A3D] to-pink-600 flex items-center justify-center text-white font-bold text-xs">
                   PC
@@ -119,11 +134,11 @@ const Hero = ({ heroImage }: HeroProps) => {
 
           {/* --- CENTER COLUMN (The Big Image/Shape) --- */}
           {/* Adjusted height for responsiveness: smaller on mobile, tall on desktop */}
-          <div ref={centerColRef} className="lg:col-span-5 relative order-2 h-[350px] sm:h-[500px] lg:h-[700px] flex items-center justify-center my-4 lg:my-0">
+          <div ref={centerColRef} className="lg:col-span-5 relative order-2 h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] flex items-center justify-center my-4 lg:my-0">
             {/* The Maroon Organic Shape */}
             <div className="relative w-full h-full">
                {/* Background Shape */}
-              <div className="absolute inset-0 bg-[#8B1A3D] rounded-[30px] md:rounded-[60px] lg:rounded-[80px] overflow-hidden transform rotate-0 lg:rotate-[-2deg] transition-all hover:rotate-0 duration-500 shadow-2xl">
+              <div className="absolute inset-0 bg-[#8B1A3D] rounded-[20px] sm:rounded-[30px] md:rounded-[40px] lg:rounded-[60px] xl:rounded-[80px] overflow-hidden transform rotate-0 lg:rotate-[-2deg] transition-all hover:rotate-0 duration-500 shadow-2xl">
                 {/* Decorative text inside shape */}
                 <div className="absolute top-6 left-6 text-white/90 z-20">
                     <p className="text-[10px] sm:text-xs uppercase tracking-widest mb-1">Unlock the power</p>
@@ -138,7 +153,10 @@ const Hero = ({ heroImage }: HeroProps) => {
                 <img 
                   src={heroImage} 
                   alt="Fashion Model" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 mix-blend-normal hover:scale-105 transition-transform duration-1000 ease-out"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover opacity-90 mix-blend-normal hover:scale-105 transition-transform duration-1000 ease-out will-change-transform"
                 />
                 
                 {/* Gradient Overlay */}
@@ -146,7 +164,7 @@ const Hero = ({ heroImage }: HeroProps) => {
               </div>
 
               {/* Floating "Next Frontier" Text - Hidden on mobile, visible on desktop */}
-              <div className="absolute bottom-12 -right-12 bg-white p-5 rounded-[24px] shadow-2xl max-w-xs z-30 hidden lg:block">
+              <div className="absolute bottom-8 md:bottom-12 -right-4 md:-right-12 bg-white p-3 md:p-5 rounded-[16px] md:rounded-[24px] shadow-2xl max-w-[200px] md:max-w-xs z-30 hidden lg:block">
                  <p className="text-xs text-gray-500 mb-2">Popclozet Platform</p>
                  <p className="text-sm font-medium leading-relaxed">
                     A cutting-edge platform exploring the next frontier of style.
@@ -158,7 +176,7 @@ const Hero = ({ heroImage }: HeroProps) => {
           {/* --- RIGHT COLUMN (Secondary Text & Form) --- */}
           <div ref={rightColRef} className="lg:col-span-4 flex flex-col justify-center items-center lg:items-start pl-0 lg:pl-12 order-3 text-center lg:text-left">
              {/* Secondary Headline */}
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-gray-900 leading-tight mb-4 lg:mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif text-gray-900 leading-tight mb-4 lg:mb-6">
               Where Ownership <br />
               Ends, Rental <br />
               <span className="text-[#8B1A3D]">Begins.</span>
@@ -171,7 +189,9 @@ const Hero = ({ heroImage }: HeroProps) => {
                      <div className="w-full h-full bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden">
                          <img 
                             src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop" 
-                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 will-change-transform"
                             alt="Accessory"
                          />
                      </div>
@@ -179,13 +199,13 @@ const Hero = ({ heroImage }: HeroProps) => {
             </div>
 
             {/* Description */}
-            <p className="text-gray-500 text-base md:text-lg mb-6 max-w-sm">
+            <p className="text-gray-500 text-sm sm:text-base md:text-lg mb-4 md:mb-6 max-w-sm">
                 New outfit everyday, delivered in 60 minutes. Unlock the closet now.
             </p>
 
             {/* Email Capture Form - Replaces CTA */}
             <div className="w-full max-w-md">
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 relative">
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 relative" noValidate>
                     <Input 
                         type="email" 
                         placeholder="Enter your email" 
