@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Plus, ArrowUpRight, MessageCircle } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -38,7 +38,7 @@ const faqs = [
   },
 ];
 
-const FAQItem = ({ item, index, isOpen, onClick }: { item: any, index: number, isOpen: boolean, onClick: () => void }) => {
+const FAQItem = memo(({ item, index, isOpen, onClick }: { item: any, index: number, isOpen: boolean, onClick: () => void }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<HTMLDivElement>(null);
   
@@ -74,29 +74,29 @@ const FAQItem = ({ item, index, isOpen, onClick }: { item: any, index: number, i
   return (
     <div 
       onClick={onClick}
-      className="group border-b border-gray-200 cursor-pointer py-6 md:py-8 transition-colors duration-500 hover:border-[#8B1A3D]"
+      className="group border-b border-gray-200 cursor-pointer py-4 sm:py-6 md:py-8 transition-colors duration-500 hover:border-[#8B1A3D]"
     >
       {/* Header Row */}
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex items-start justify-between gap-3 sm:gap-4 md:gap-6">
         
-        <div className="flex items-baseline gap-6 md:gap-12 flex-1">
+        <div className="flex items-baseline gap-3 sm:gap-4 md:gap-6 lg:gap-12 flex-1 min-w-0">
           {/* Index Number */}
-          <span className={`font-mono text-sm md:text-base transition-colors duration-300 ${isOpen ? "text-[#8B1A3D] font-bold" : "text-gray-300 group-hover:text-[#8B1A3D]"}`}>
+          <span className={`font-mono text-xs sm:text-sm md:text-base transition-colors duration-300 shrink-0 ${isOpen ? "text-[#8B1A3D] font-bold" : "text-gray-300 group-hover:text-[#8B1A3D]"}`}>
             0{index + 1}
           </span>
           
           {/* Question */}
-          <h3 className={`text-xl md:text-3xl font-serif font-medium leading-tight transition-colors duration-300 ${isOpen ? "text-[#8B1A3D]" : "text-gray-900 group-hover:text-[#8B1A3D]"}`}>
+          <h3 className={`text-base sm:text-lg md:text-xl lg:text-3xl font-serif font-medium leading-tight transition-colors duration-300 ${isOpen ? "text-[#8B1A3D]" : "text-gray-900 group-hover:text-[#8B1A3D]"}`}>
             {item.question}
           </h3>
         </div>
 
         {/* Icon */}
-        <div ref={arrowRef} className={`shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full border border-gray-200 flex items-center justify-center transition-all duration-300 ${isOpen ? "bg-[#8B1A3D] border-[#8B1A3D]" : "bg-transparent group-hover:border-[#8B1A3D]"}`}>
+        <div ref={arrowRef} className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border border-gray-200 flex items-center justify-center transition-all duration-300 ${isOpen ? "bg-[#8B1A3D] border-[#8B1A3D]" : "bg-transparent group-hover:border-[#8B1A3D]"}`}>
            {isOpen ? (
-             <Plus className="w-5 h-5 text-white rotate-45" /> 
+             <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-white rotate-45" /> 
            ) : (
-             <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-[#8B1A3D]" />
+             <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-[#8B1A3D]" />
            )}
         </div>
       </div>
@@ -106,15 +106,17 @@ const FAQItem = ({ item, index, isOpen, onClick }: { item: any, index: number, i
         ref={contentRef} 
         className="h-0 overflow-hidden opacity-0"
       >
-        <div className="pt-6 pl-0 md:pl-[4.5rem] max-w-2xl">
-          <p className="text-gray-500 text-base md:text-lg leading-relaxed font-light">
+        <div className="pt-4 sm:pt-6 pl-0 sm:pl-8 md:pl-[4.5rem] max-w-2xl">
+          <p className="text-gray-500 text-sm sm:text-base md:text-lg leading-relaxed font-light">
             {item.answer}
           </p>
         </div>
       </div>
     </div>
   );
-};
+});
+
+FAQItem.displayName = "FAQItem";
 
 const FAQ = () => {
   const containerRef = useRef<HTMLElement>(null);
@@ -122,6 +124,12 @@ const FAQ = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      // Optimize with will-change
+      const faqItems = document.querySelectorAll(".faq-item-anim");
+      faqItems.forEach((el) => {
+        gsap.set(el, { willChange: "transform, opacity" });
+      });
+
       // Staggered entrance for the list items
       gsap.from(".faq-item-anim", {
         y: 50,
@@ -129,6 +137,8 @@ const FAQ = () => {
         duration: 0.8,
         stagger: 0.1,
         ease: "power3.out",
+        force3D: true,
+        clearProps: "willChange",
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 70%",
@@ -139,37 +149,37 @@ const FAQ = () => {
     return () => ctx.revert();
   }, []);
 
-  const handleToggle = (index: number) => {
+  const handleToggle = useCallback((index: number) => {
     setOpenIndex(openIndex === index ? null : index);
-  };
+  }, [openIndex]);
 
   return (
-    <section ref={containerRef} id="faq" className="relative py-24 md:py-32 bg-white overflow-hidden">
+    <section ref={containerRef} id="faq" className="relative py-12 sm:py-16 md:py-24 lg:py-32 bg-white overflow-hidden">
       
       {/* Background Decor: Big '?' Watermark */}
-      <div className="absolute top-0 right-[5%] text-[40rem] font-serif font-black text-gray-50 leading-none pointer-events-none select-none -z-10 opacity-60">
+      <div className="absolute top-0 right-[5%] text-[15rem] sm:text-[25rem] md:text-[35rem] lg:text-[40rem] font-serif font-black text-gray-50 leading-none pointer-events-none select-none -z-10 opacity-60">
         ?
       </div>
 
       <div className="container mx-auto px-4 md:px-6 max-w-5xl">
         
         {/* Editorial Header - Redesigned */}
-<div className="flex flex-col items-center text-center mb-16 md:mb-24 relative">
+<div className="flex flex-col items-center text-center mb-8 sm:mb-12 md:mb-16 lg:mb-24 relative">
   
   {/* Subtext acting as the "Eyebrow" */}
-  <span className="text-[#8B1A3D] font-bold tracking-[0.2em] text-xs md:text-sm uppercase mb-4 md:mb-6 block relative z-10">
+  <span className="text-[#8B1A3D] font-bold tracking-[0.2em] text-[10px] sm:text-xs md:text-sm uppercase mb-3 sm:mb-4 md:mb-6 block relative z-10 px-4">
     Everything you need to know about Popclozet
   </span>
 
   {/* Main Headline */}
-  <h2 className="text-4xl md:text-6xl lg:text-7xl font-serif font-medium text-gray-900 leading-[1.1] relative z-10">
-    Got Questions? <br className="hidden md:block" />
+  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-medium text-gray-900 leading-[1.1] relative z-10 px-4">
+    Got Questions? <br className="hidden sm:block" />
     <span className="relative inline-block mt-1 md:mt-2">
       We've Got <span className="font-black italic text-[#8B1A3D]">Answers.</span>
       
       {/* Decorative Vector Underline for "Answers" */}
       <svg 
-        className="absolute w-[110%] h-6 -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 text-[#8B1A3D]/20 -z-10" 
+        className="absolute w-[110%] h-4 sm:h-5 md:h-6 -bottom-1 sm:-bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 text-[#8B1A3D]/20 -z-10" 
         viewBox="0 0 100 10" 
         preserveAspectRatio="none"
       >
@@ -179,7 +189,7 @@ const FAQ = () => {
   </h2>
 
   {/* Background blur for depth (Optional polish) */}
-  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#8B1A3D]/5 rounded-full blur-[80px] -z-0 pointer-events-none" />
+  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 sm:w-64 h-48 sm:h-64 bg-[#8B1A3D]/5 rounded-full blur-[80px] -z-0 pointer-events-none" />
 </div>
 
         {/* The List */}

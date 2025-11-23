@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Star, Quote, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { gsap } from "gsap";
 import { cn } from "@/lib/utils";
@@ -76,98 +76,121 @@ const Testimonials = () => {
   const quoteRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
 
-  // Auto-play logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      handleNext();
-    }, 6000); // Change every 6 seconds
-    return () => clearInterval(interval);
-  }, [active]);
-
-  const animateSlide = (direction: "next" | "prev", nextIndex: number) => {
+  const animateSlide = useCallback((direction: "next" | "prev", nextIndex: number) => {
     if (isAnimating) return;
     setIsAnimating(true);
+
+    // Optimize with will-change
+    if (imageRef.current) gsap.set(imageRef.current, { willChange: "transform, opacity" });
+    if (quoteRef.current) gsap.set(quoteRef.current, { willChange: "transform, opacity" });
+    if (detailsRef.current) gsap.set(detailsRef.current, { willChange: "transform, opacity" });
 
     const tl = gsap.timeline({
       onComplete: () => {
         setActive(nextIndex);
         setIsAnimating(false);
         
-        // Animate In
+        // Animate In with GPU acceleration
         gsap.fromTo([imageRef.current, quoteRef.current, detailsRef.current], 
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power3.out" }
+          { opacity: 0, y: 20, force3D: true },
+          { 
+            opacity: 1, 
+            y: 0, 
+            duration: 0.6, 
+            stagger: 0.1, 
+            ease: "power3.out",
+            clearProps: "willChange"
+          }
         );
       }
     });
 
-    // Animate Out
+    // Animate Out with GPU acceleration
     tl.to([quoteRef.current, detailsRef.current], {
       opacity: 0,
       y: -20,
       duration: 0.4,
       ease: "power2.in",
+      force3D: true,
     }).to(imageRef.current, {
       opacity: 0,
       scale: 0.95,
       duration: 0.4,
       ease: "power2.in",
+      force3D: true,
     }, "<"); // Run simultaneously
-  };
+  }, [isAnimating]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const nextIndex = active === testimonials.length - 1 ? 0 : active + 1;
     animateSlide("next", nextIndex);
-  };
+  }, [active, animateSlide]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     const nextIndex = active === 0 ? testimonials.length - 1 : active - 1;
     animateSlide("prev", nextIndex);
-  };
+  }, [active, animateSlide]);
 
-  const current = testimonials[active];
+  // Auto-play logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleNext();
+    }, 6000); // Change every 6 seconds
+    return () => clearInterval(interval);
+  }, [handleNext]);
+
+  const current = useMemo(() => testimonials[active], [active]);
+  
+  // Preload next image for smoother transitions
+  useEffect(() => {
+    const nextIndex = active === testimonials.length - 1 ? 0 : active + 1;
+    const nextImage = new Image();
+    nextImage.src = testimonials[nextIndex].image;
+  }, [active]);
 
   return (
-    <section id="testimonials" className="py-20 md:py-32 bg-[#FAFAFA] relative overflow-hidden">
+    <section id="testimonials" className="py-12 sm:py-16 md:py-20 lg:py-32 bg-[#FAFAFA] relative overflow-hidden">
       {/* Background Decor - Big Quote Mark */}
-      <div className="absolute top-20 right-[5%] text-[#8B1A3D]/5 font-serif text-[20rem] leading-none select-none pointer-events-none font-black">
+      <div className="absolute top-10 md:top-20 right-[5%] text-[#8B1A3D]/5 font-serif text-[10rem] sm:text-[15rem] md:text-[20rem] leading-none select-none pointer-events-none font-black">
         ”
       </div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-6xl">
         
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
           <span className="text-[#8B1A3D] font-bold tracking-widest text-xs uppercase mb-2 block">
             Real Stories, Real Style
           </span>
-          <h2 className="text-3xl md:text-5xl font-serif font-bold text-gray-900">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-gray-900">
             Loved by the <span className="italic text-gray-400">Early Adopters</span>
           </h2>
         </div>
 
         {/* --- MAIN TESTIMONIAL COMPONENT --- */}
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
+        <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-8 lg:gap-16">
           
           {/* LEFT: User Image (The Proof) */}
           <div className="w-full lg:w-1/2 relative" ref={imageRef}>
-            <div className="relative z-20 aspect-[4/5] md:aspect-[4/3] lg:aspect-square rounded-[32px] overflow-hidden shadow-2xl">
+            <div className="relative z-20 aspect-[4/5] md:aspect-[4/3] lg:aspect-square rounded-[20px] sm:rounded-[24px] md:rounded-[32px] overflow-hidden shadow-2xl">
               <img 
                 src={current.image} 
-                alt={current.name} 
-                className="w-full h-full object-cover"
+                alt={`${current.name} - ${current.role}`}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover will-change-transform"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               
               {/* "What I Rented" Tag - Authenticity Booster */}
-              <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/20 transform transition-transform hover:scale-105 duration-300">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider mb-1">She Rented</p>
-                    <p className="text-sm font-serif font-bold text-gray-900">{current.rentedItem}</p>
+              <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-lg border border-white/20 transform transition-transform hover:scale-105 duration-300">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] sm:text-[10px] uppercase text-gray-500 font-bold tracking-wider mb-1">She Rented</p>
+                    <p className="text-xs sm:text-sm font-serif font-bold text-gray-900 truncate">{current.rentedItem}</p>
                   </div>
-                  <div className="text-right">
-                     <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">
+                  <div className="text-right shrink-0">
+                     <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold rounded-lg whitespace-nowrap">
                        {current.priceSaved}
                      </span>
                   </div>
@@ -191,21 +214,21 @@ const Testimonials = () => {
             </div>
 
             {/* The Quote */}
-            <div ref={quoteRef} className="min-h-[160px] md:min-h-[140px]">
-              <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif font-medium leading-tight text-gray-900 mb-6">
+            <div ref={quoteRef} className="min-h-[120px] sm:min-h-[160px] md:min-h-[140px]">
+              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif font-medium leading-tight text-gray-900 mb-4 sm:mb-6">
                 "{current.quote}"
               </h3>
             </div>
 
             {/* User Details */}
-            <div ref={detailsRef} className="flex flex-col gap-6">
-               <div className="flex items-center gap-4">
-                  <div>
-                    <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <div ref={detailsRef} className="flex flex-col gap-4 sm:gap-6">
+               <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
                       {current.name}
-                      <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50 shrink-0" />
                     </h4>
-                    <p className="text-gray-500 text-sm">{current.role} • <span className="text-[#8B1A3D] font-medium">{current.event}</span></p>
+                    <p className="text-gray-500 text-xs sm:text-sm">{current.role} • <span className="text-[#8B1A3D] font-medium">{current.event}</span></p>
                   </div>
                   
                   {/* Rating */}
@@ -217,30 +240,30 @@ const Testimonials = () => {
                </div>
 
                {/* Navigation Controls */}
-               <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
+               <div className="flex items-center gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-100">
                   <div className="flex gap-2">
                     <button 
                       onClick={handlePrev}
-                      className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#8B1A3D] hover:border-[#8B1A3D] hover:text-white transition-all duration-300"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#8B1A3D] hover:border-[#8B1A3D] hover:text-white transition-all duration-300"
                     >
-                      <ArrowLeft className="w-5 h-5" />
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                     <button 
                       onClick={handleNext}
-                      className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#8B1A3D] hover:border-[#8B1A3D] hover:text-white transition-all duration-300"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#8B1A3D] hover:border-[#8B1A3D] hover:text-white transition-all duration-300"
                     >
-                      <ArrowRight className="w-5 h-5" />
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                   
                   {/* Progress Indicators */}
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-1.5 sm:gap-2 ml-2 sm:ml-4">
                     {testimonials.map((_, idx) => (
                       <div 
                         key={idx}
                         className={cn(
                           "h-1.5 rounded-full transition-all duration-500",
-                          active === idx ? "w-8 bg-[#8B1A3D]" : "w-2 bg-gray-200"
+                          active === idx ? "w-6 sm:w-8 bg-[#8B1A3D]" : "w-1.5 sm:w-2 bg-gray-200"
                         )}
                       />
                     ))}

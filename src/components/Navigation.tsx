@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Menu, X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,29 +12,33 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Handle scroll detection for navbar styling
+  // Handle scroll detection for navbar styling - optimized with throttling
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
+  const navLinks = useMemo(() => [
     { label: "Benefits", href: "#benefits" },
     { label: "Testimonials", href: "#testimonials" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "FAQ", href: "#faq" },
-  ];
+  ], []);
 
-  // GSAP Smooth Scroll Function
-  const handleNavClick = (e: React.MouseEvent<HTMLButtonElement>, href: string) => {
+  // GSAP Smooth Scroll Function - optimized with useCallback
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLButtonElement>, href: string) => {
     e.preventDefault();
     
     // Close mobile menu if open
@@ -53,7 +57,7 @@ const Navigation = () => {
         ease: "power4.inOut", // Smooth 'luxury' feel easing
       });
     }
-  };
+  }, []);
 
   return (
     <nav
@@ -81,13 +85,13 @@ const Navigation = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <div className="flex items-center gap-6 bg-white/50 backdrop-blur-sm px-6 py-2 rounded-full border border-gray-100/50 shadow-sm">
+          <div className="hidden md:flex items-center gap-4 lg:gap-8">
+            <div className="flex items-center gap-3 lg:gap-6 bg-white/50 backdrop-blur-sm px-3 lg:px-6 py-2 rounded-full border border-gray-100/50 shadow-sm">
                 {navLinks.map((link) => (
                 <button
                     key={link.label}
                     onClick={(e) => handleNavClick(e, link.href)}
-                    className="relative group text-sm font-medium text-gray-600 hover:text-[#8B1A3D] transition-colors"
+                    className="relative group text-xs lg:text-sm font-medium text-gray-600 hover:text-[#8B1A3D] transition-colors whitespace-nowrap"
                 >
                     {link.label}
                     {/* Hover Underline Animation */}
@@ -98,11 +102,12 @@ const Navigation = () => {
 
             <Button
               size="lg"
-              className="bg-[#1a1a1a] hover:bg-[#8B1A3D] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6"
+              className="bg-[#1a1a1a] hover:bg-[#8B1A3D] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-4 lg:px-6 text-xs lg:text-base"
               onClick={(e) => handleNavClick(e, "#cta")}
             >
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              Unlock Closet
+              <ShoppingBag className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2" />
+              <span className="hidden lg:inline">Unlock Closet</span>
+              <span className="lg:hidden">Unlock</span>
             </Button>
           </div>
 
@@ -124,7 +129,7 @@ const Navigation = () => {
           isOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="flex flex-col gap-6">
+        <div className="flex bg-white flex-col gap-6">
           {navLinks.map((link, index) => (
             <button
               key={link.label}
